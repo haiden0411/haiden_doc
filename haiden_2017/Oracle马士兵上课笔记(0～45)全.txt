@@ -1,0 +1,878 @@
+第一课：客户端 
+    1.Dos命令行下：sqlplus 用户名：scott 密码：tiger,sqlplus scott/tiger 
+    2.开始－运行－sqlplus 图形版的SQLPLUS 
+    3.http://localhost:5560/isqlplus 
+
+    Toad:管理 Plsql Developer 
+
+第二课：更改用户 
+    1.sqlplus sys/bjsxt as sysdba 
+    2.alter user scott account unlock;(解锁) 
+
+第三课：table_structures 
+    1.desc 表名 
+    2.select * from 表名 
+第四课：select语句 
+    1.select ename, sal*12 annual_sal from emp; 
+     select ename sal*12 "annual sal" from emp;双引号可以保持原大小写，并且中间可以加空        格，不加全变为大写 
+    2.desc dual，select 2*3 from dual，dual是系统自带的一张空表，计算数据时可以使用该表 
+    3.任何含有空值的算术表达式的计算结果是空值 
+    4.select ename||sal from emp; 
+    5.select ename || 'abcdefg' from emp; 
+    6.select ename || 'abcd''efg' from emp;当字符串中含有单引号时，可用两个单引号代表一        个单引号 
+    7.set linesize 200;--用于设定每行显示的宽度 
+    8.set pagesize 30;--设置显示的页数 
+
+第五课：distinct 
+    1.select distinct deptno from emp; 
+    2.select distinct deptno,job from emp; 
+
+第六课：where 
+    1.select * from emp where empno = 10; 
+    2.select * from emp where empno <> 10; 
+    3.select * from emp where ename = 'hebe'; 
+    4.select * from emp where sal (not) between 800 and 1500; 
+    5.select * from emp where comm is (not) null; 
+    6.select * from emp where ename (not) in ('smith','philip','jay'); 
+    7.select * from emp where ename like '_A%'; 
+    8.select * from emp where ename like '_\%a%';系统默认转义符是\,可以自己指定转义符 
+     select * from emp where ename like '_$%a%' escape '$'; 
+
+第七课：order by 
+    1.select * from dept; 
+    2.select * from dept order by dept desc;(默认为asc) 
+    3.select ename, sal, deptno from emp where sal > 2000 order by deptno asc,ename         desc; 
+
+第八课：sql_function 
+    1.select ename,sal*12 annual_sal from emp where ename not like '_A%' and sal > 1500 
+    order by sal desc; 
+    2.select lower(ename) from emp; 
+    3.select ename from emp where lower(ename) like '_a%'; 
+    4.select substr(ename,2,3) from emp;从第二字符截，一共截三个字符。 
+    5.select chr(65) from dual;结果为A 
+    6.select ascii('a') from dual;结果为65 
+    7.select round(35.572) from dual;结果为36 
+    8.select round(35.572,2) from dual;结果为35.57 
+    9.select round(35.572,-1) from dual;结果为40 
+    10.select to_char(sal,'$99,999.9999') from emp;to_char函数主要用于对日期和数字进行格        式化 
+    11.select to_char(sal,'L99,999.9999') from emp;人民币符号，L代表本地符号。 
+    12.select birthdate from emp; 
+    显示为：BIRTHDATE 
+    --------------------- 
+    22-3月-87 
+    改为：select to_char(birthdate,'YYYY-MM-DD HH24:MI:SS') from emp; 
+    13.to_data函数 
+       select ename,birthdate from emp where birthdate > to_date('1987-3-22             11:22:33','YYYY-MM-DD HH24:MI:SS');不能直接写birthdate>'1987-2-22 11:22:33'会出现格        式不匹配，因为表中格式为DD-MM月－YY, 
+    14.select sal from emp where sal > to_number('$12,444.99','$99,999.99'); 
+    15.select ename, sal*12+nvl(comm,0) from 这样防止comm为空时，sal*12相加也为空的情况 
+
+第九课：Group function 组函数 
+    1.select max(sal) from emp; 
+    2.select min(sal) from emp; 
+    3.select to_char(avg(sal), '$999,999,999.99') from emp; 
+    4.select round(sum(sal),2) from emp; 
+    5.select count(*) from emp where sal > 1500; 
+    6.select count(comm) from emp; 
+    7.select count(distinct deptno) from emp; 
+
+第十课：Group by语句 
+    1.select avg(sal) from emp group by deptno; 
+    2.select deptno,avg(sal) from emp group by deptno; 
+    3.select deptno,job,max(sal) from emp group by deptno,job; 
+    4.求薪水值最高的人的名称select ename,max(sal) from emp;出错，因为max只能有一个值，但        是等于max的值可能有好几个，不能匹配。 
+    可以写成select ename from emp where sal=(select max(sal) from emp); 
+    Group by 语句应注意，出现在select中的字段，如果没有出现在组函数中，必须出现在Group         by语句中。 
+
+第十一课：Having对分组结果筛选 
+    1.where是对单条记录进行筛选,Having是对分组结果进行筛选 
+    select avg(sal),deptno from emp group by deptno having avg(sal) > 2000; 
+    2.查询工资大于2000的雇员,按照部门编号进行分组,分组后平均薪水大于1500,按工资倒序排列 
+    select deptno,avg(sal) from emp where sal > 2000 group by deptno having avg(sal) >         1500 order by avg(sal) desc; 
+
+第十二课:子查询 
+    1.select 语句中嵌套select 语句,求哪些人工资在平均工资之上. 
+    select ename,sal from emp where sal > (select avg(sal) from emp); 
+    2.查找每个部门挣钱最多的那个人的名字. 
+    select ename, deptno from emp where sal in (select max(sal) from emp group by             deptno) 查询会多值.正确写法是: 
+    应把select max(sal),deptno from emp group by deptno当成一个表,语句如下: 
+    select ename,sal from emp join (select max(sal) max_sal,deptno from emp group by         deptno) t on (emp.sal = t.max_sal and emp.deptno = t.deptno); 
+
+第十三课:self_table_connection 
+    select e1.ename,e2.ename from emp e1,emp e2 where e1.mgr = e2.empno; 
+
+第十四课:SQL1999_table_connection 
+    1.select ename,dname,grade from emp e,dept d,sqlgrade s where e.deptno=d.deptno and          e.sal between s.losal and s.hisal and job <> 'CLERK'; 
+    这种写法没有把过滤条件和连接条件分开来,由于这个原因,sql1999标准推出来了. 
+    2.select ename,dname from emp,dept;(旧标准) 
+     select ename,dname from emp cross join dept;(1999标准) 
+    3.select ename,dname from emp,dept where emp.deptno = dept.deptno;(旧) 
+     select ename,dname from emp join dept on (emp.deptno = dept.deptno) 
+    4.select ename,grade from emp e join salgrade s on(s.sal between s.losal and           `      s.hisal); 
+    5.select ename,dname,grade from emp e join dept d on(e.deptno = d.deptno) join                salgrade s on (e.sal between s.losal and s.hisal) where ename not like '_A%'; 
+    6.select e1.ename,e2.ename from emp e1 join emp e2 on (e1.mgr = e2.deptno); 
+    7.select e1.ename,e2.ename from emp e1 left (outer) join emp e2 on (e1.mgr =                e2.empno); 
+    8.select ename,dname from emp e right outer join dept d on (e.deptno = d.deptno); 
+    9.select ename,dname from emp e full join dept d on (e.deptno = d.deptno); 
+
+第十六至二十三课:求部门平均薪水等级 
+    1.A.求部门平均薪水的等级 
+    select deptno,avg_sal,grade from (select deptno,avg(sal) avg_sal from emp group          by deptno) t join salgrade s on (t.avg_sal between s.losal and s.hisal) 
+    2.求部门平均的薪水等级 
+    select deptno,avg(grade) from (select deptno,ename,grade from emp e join              salgrade s on (emp.sal between s.losal and s.hisal)) t group by deptno; 
+    3.哪些人是经理 
+    select ename2 from (select e1.ename ,e1.mgr mgr1,e2.ename ename2 from emp e1 join         emp e2 on (e1.mgr = e2.empno)) t join emp on (t.mgr1 = emp.empno) 
+    select ename from emp where empno in (select distinct mgr from emp) 
+    4.不准用组函数,求薪水的最高值 
+    select distinct sal from emp where sal not in( 
+    select distinct e1.sal from emp e1 join emp e2 on (e1.sal < e2.sal) ) 
+    5.求平均薪水最高的部门编号 
+    select deptno,avg_sal from ( 
+        select deptno,avg(sal) avg_sal from dept group by deptno 
+        ) 
+    where avg_sal = ( 
+    select max(avg_sal) from ( 
+        select deptno,avg(sal) avg_sal from dept group by deptno 
+        ) 
+    ) 
+    select deptno,avg_sal from 
+        (select deptno,avg(sal) avg_sal from dept group by deptno) 
+    where avg_sal = 
+        (select max(avg(sal))  from dept group by deptno) 
+    
+    6.求平均薪水最高的部门名称 
+    select dname from dept where deptno = 
+    ( 
+    select deptno from 
+        (select deptno,avg(sal) avg_sal from dept group by deptno) 
+    where avg_sal = 
+        ( 
+        select max(avg_sal) from 
+            (select deptno,avg(sal) avg_sal from dept group by deptno) 
+        ) 
+    ) 
+    7.求平均薪水等级最低的部门的部门名称 
+    错误写法: 
+    select min(avg_grade),deptno from 
+    ( 
+    select deptno,avg(grade) avg_grade 
+    ( 
+    select ename,deptno,grade from emp e join salgrade s on (e.sal between s.losal and         s.hisal) 
+    ) group by deptno 
+    ) group by deptno 
+    正确写法: 
+    select dname,t1.deptno,grade,avg_sal from 
+     ( 
+     select deptno,avg_sal,grade from 
+       (select deptno,avg(sal) avg_sal from emp group by deptno) t    
+     join salgrade s on (t.avg_sal between s.losal and s.hisal) 
+     ) t1 join dept on (t1.deptno = dept.deptno) 
+    where t1.grade = 
+     ( 
+       select min(grade) from 
+       ( 
+         select deptno,avg_sal,grade from 
+           (select deptno,avg(sal) avg_sal from emp group by deptno) t    
+         join salgrade s on (t.avg_sal between s.losal and s.hisal) 
+       ) 
+     ) 
+    
+    8.视图:view就是一张虚表,一个子查询 
+    conn sys/change_on_install as sysdba; 
+    grant create table,create view to scott; 
+    conn scott/tiger; 
+    创建视图 
+    create view v$_dept_avg_sal_info as 
+    select deptno,avg_sal,grade from 
+     (select deptno,avg(sal) avg_sal from emp group by deptno) t 
+    join salgrade s on (t.avg_sal between s.losal and s.hisal) 
+    使用视图后可以简写 
+    select dname,t1.deptno,grade,avg_sal_info from 
+     v$_dept_avg_sal t1 join dept on (t1.deptno = dept.deptno) 
+    where t1.grade = 
+     ( 
+       select min(grade) from v$_dept_avg_sal_info 
+     ) 
+    9.求比普通员工最高薪水还要高的经理人的名称 
+    先求普通员工的最高薪水 
+    select max(sal) from emp where empno not in 
+     (select distinct mgr from emp where mgr is not null); 
+    
+    select ename from emp where empno in 
+     (select distinct mgr from emp where mgr is not null) 
+    and sal > 
+     ( 
+     select max(sal) from emp where empno not in 
+       (select distinct mgr from emp where mgr is not null);    
+     ) 
+
+第二十四课 
+	#备份scott用户(把它的表备份)
+	exp             #导出
+    备份与恢复 
+    DOS环境下:exp导出,imp导入 
+    --drop user yugang cascade; 
+    --cd \ 
+    --cd temp 
+    =-delete *.* 
+    --exp 
+    --create user yugang indentified by yugang default tablespace users quota 10M on users   #创建用户
+    --grant create session,create table,create view to yugang 				     #分配权限
+    --imp the data 
+    第一次输入的用户名密码为:yugang/yugang 
+    第二次输入的用户名密码为:导出数据的用户的用户名和密码 
+    --rollback 
+    create table emp2 as select * from emp; 	#创建一张表内容与emp一样
+    insert into emp2 select * from emp;
+
+第二十五课:rownum 
+    rownum是在Oracle中在表的后面加的一个尾字段,并且只能使用诸如rownum<n或rownum<=n这样的形式,不能与>或>=相连接 
+
+    1.求薪水值最高的前5条记录. 
+    select ename,sal from emp order by sal desc where sal <= 5; 
+    2.求薪水值最高的第6~10条记录. 
+    select ename,sal from 
+     ( 
+       select ename,sal,rownum r from 
+         (select ename,sal from emp order by sal desc) 
+     ) 
+    where r >=6 and r <= 10; 
+
+
+第二十六课:homework_dml_transaction 
+    SQL面试题 
+    有三张表S、C、SC 
+    S(SNO、SNAME)代表（学号、姓名） 
+    C(CNO、CNAME、CTEACHER)代表（课号、课名、老师） 
+    SC(SNO、CNO、SCGRADE)代表（学号、课号、成绩） 
+    1.求出没选过郭富城老师的所有学生姓名 
+    2.列出2门以上（含2门）不及格的学生姓名及平均成绩 
+    3.既学过1号课程又学过2号课程的所有学生姓名 
+    1.select sname from s join sc on (s.sno = sc.sno) join c on (c.cno = sc.cno) 
+    where c.cteacher <> '郭富城'; 
+    2.select sname from s where sno in 
+     ( 
+       select sno from sc where scgrade < 60 group by sno having count(*) >= 2 
+     ) 
+    3.select sname from s where sno in 
+     ( 
+       select sno from sc where cno=1 and sno in 
+         (select distinct sno from sc where cno=2) 
+     ) 
+
+    事务transaction代表一组不可分割的操作，要么全部执行，要么全部不执行， 
+    transaction起始于一条DML语句，结束于commit;语句，或者是DCL、DDL语句，在事务未提交前    
+    可以通过rollback回滚事务，正常退出事务会自动提交，非正常退出事务会自动回滚。 
+
+第二十七课：create table 
+    create table student 
+    ( 
+    id number(6), 
+    name varchar2(20), 
+    sex number(1), 
+    age number(3), 
+    sdate date, 
+    grade number(2) default 1, 
+    class number(4), 
+    email varchar2(50) 
+    ); 
+    
+第二十八~三十课 constraint 
+    not null,unique(当某字段有unique约束时，可以插入空值，空值之间不重复)、主键、外键、check约束 
+    create table student 
+    ( 
+    id number(6), 
+    name varchar2(20) constraint stu_name_nn not null, 
+    sex number(1), 
+    age number(3), 
+    sdate date, 
+    grade number(2) default 1, 
+    class number(4), 
+    email varchar2(50) unique 
+    ) 
+    / 
+    行级约束（放在字段后面）与表级约束（加在表后面）： 
+    create table student 
+    ( 
+    id number(6), 
+    name varchar2(20) constraint stu_name_nn not null, 
+    sex number(1), 
+    age number(3), 
+    sdate date, 
+    grade number(2) default 1, 
+    class number(4), 
+    email varchar2(50), 
+    constraint stu_email_name_uni unique(name,email) 
+    ) 
+    / 
+    主键约束 
+    create table student 
+    ( 
+    id number(6) primary key, 
+    name varchar2(20) constraint stu_name_nn not null, 
+    sex number(1), 
+    age number(3), 
+    sdate date, 
+    grade number(2) default 1, 
+    class number(4), 
+    email varchar2(50), 
+    constraint stu_email_name_uni unique(name,email) 
+    ) 
+    / 
+    create table student 
+    ( 
+    id number(6), 
+    name varchar2(20) constraint stu_name_nn not null, 
+    sex number(1), 
+    age number(3), 
+    sdate date, 
+    grade number(2) default 1, 
+    class number(4), 
+    email varchar2(50), 
+    constraint stu_id_pk primary key(id), 
+    constraint stu_email_name_uni unique(name,email) 
+    ) 
+    / 
+    外键约束 
+    外键约束被参考的字段必须是主键。 
+    create table class 
+    ( 
+    id number(4) primary key, 
+    name varchar2(20) not null 
+    ) 
+    / 
+    create table student 
+    ( 
+    id number(6), 
+    name varchar2(20) constraint stu_name_nn not null, 
+    sex number(1), 
+    age number(3), 
+    sdate date, 
+    grade number(2) default 1, 
+    class number(4) references class(id), 
+    email varchar2(50), 
+    constraint stu_id_pk primary key(id), 
+    constraint stu_email_name_uni unique(name,email) 
+    ) 
+    / 
+
+    create table student 
+    ( 
+    id number(6), 
+    name varchar2(20) constraint stu_name_nn not null, 
+    sex number(1), 
+    age number(3), 
+    sdate date, 
+    grade number(2) default 1, 
+    class number(4), 
+    email varchar2(50), 
+    constraint stu_id_pk primary key(id), 
+    constraint stu_class_fk foreign key (class) references class(id), 
+    constraint stu_email_name_uni unique(name,email) 
+    ) 
+    / 
+
+第三十一课：(修改现有表结构)
+	alter table drop table 
+    alter table student add(addr varchar2(100)); 
+    alter table student drop(addr); 
+    alter table student modify(addr varchar2(50)); 
+    若addr字段中有的记录长度大于50，则修改不成功。 
+    alter table student drop constraint stu_class_fk; 
+    alter table student add constraint stu_class_fk foreign key (class) 
+    references class (id); 
+    drop table class; 
+第32课：Oracle dictionaries 
+    desc user_tables; 
+    select table_name from user_tables; 
+    select view_name from user_views; 
+    select constraint_name from user_constraints; 
+    select constraint_name,table_name from user_constraints; 
+    desc dictionary; 
+
+第33课：indexes_and_views (创建索引)
+    索引可以提高读数据的效率，但会降低修改、写数据的效率,索引还会占用一定的存储空间 
+    create index idx_stu_email on student(email); 
+    drop index idx_stu_email; 
+    视图会带来一些维护的代价，比如表结构改了，那么视图也得跟着改变。视图还可以用来保 
+    护私有数据。 
+    select index_name from user_indexes; 
+    select view_name from user_views; 
+    
+第34课：sequences and review 
+    序列可以自动增长，在sql server中有identity，mysql中有auto_increment 
+    create table article 
+    ( 
+    id number, 
+    title varchar2(1024), 
+    cont long 
+    ) 
+    / 
+    如何保证插入数据时id不重复？ 
+    select max(id) from article;这样做也不行，如果有多个线程同时访问数据，则可能会出现 
+    数据不一致的现象，比方说第一个用户查询出最大id值是100，第二个用户也查询出最大id是 
+    100，然后第二个用户新插入一条记录：id是101，然后第一个用户也插入了一条记录：id也是 
+    101 
+    可以用Oracle的sequence 
+    create sequence seq_article_id; 
+    多个表之问可以共用一个序列，但是一般情况下为每个字段分别建立一个序列 
+    sequence有两个属性CurrVal、NextVal 
+    select seq.nextvalue from dual; 
+    insert into article values(seq.nextval,'y','yy'); 
+    insert into article values(seq.nextval,'x','xx'); 
+    insert into article values(seq.nextval,'z','zz'); 
+    insert into article values(seq.nextval,'q','qq'); 
+
+第35课：三范式 
+    第一范式： 
+    1.每个表都要有主键 
+    2.列不可分，比如： 
+    create table stu 
+    ( 
+    id number, 
+    name varchar2(20), 
+    age number 
+    ) 
+    /    
+    insert into stu values(1,'yu',21); 
+    create table stu2 
+    ( 
+    inf long 
+    ) 
+    / 
+    insert into stu2 values('1_yu_21'); 
+    虽然表stu2可以字符串解析后可以达到和表stu一样的效果，但是显然第一种方法更好，查询数    
+    据更加方便，而表stu2违反了第一范式的列不可分原则。 
+    第二范式： 
+    当有两个以上字段作主键时，非主键字段不能部分依赖于主键字段，如有一个需求，一门老师教
+	多名学生，一名学生可以选多个老师的课。然后设计了一张表，有以下字段（老师编号、学生编号、老师姓名、学生姓名等），
+	其中以老师编号和学生编号作联合主键，则些表就存在部分依赖        ，老师姓名部分依赖于老师编号，不满足第二范式，
+	有数据冗余。要解决这个问题可以设计三张表。 
+    第三范式： 
+    不能存在传递依赖，如有一张表有以下字段：（学号、姓名、班级号、班级名称、班级位置），
+        其中学号为主键，则班级号依赖于学号，每个学生都有相应的班级号，但是班级名称、班级位置
+        是依赖于班级号，即它们通过班级号传递依赖于学号，不满足第三范式。 
+
+第38课：PL_SQL 
+    set serveroutput on;                   
+    begin 
+        dbms_output.put_line('Hello World!!'); 
+    end; 
+    
+    declare 
+        v_name varchar2(20); 
+    begin 
+        v_name:='xiaoyu'; 
+        dbms_output.put_line(v_name); 
+    end; 
+
+    declare 
+        v_num number:=0; 
+    begin 
+        v_num:=2/v_num; 
+        dbms_output.put_line(v_num); 
+    exception 
+        when others then 
+         dbms_output.put_line('error'); 
+    end; 
+    --变量声明的规则 
+    1.变量名不能使用保留字 
+    2.第一个字符必须是字母 
+    3.变量名最多包含30个字母 
+    4.不要与数据库或表名同名 
+    5.每一行只能声明一个变量 
+    /* 
+    这是多行注释 
+    */ 
+
+42-----------------------------------------------------------------
+    --常用变量类型 
+        1.binary_integer：整数，主要用来计数而不是用来表示字段类型 
+    2.number数字类型 
+    3.char定长字符串 
+    4.date日期 
+    5.long长字符串，最长2GG 
+    6.boolean类型：可以取值true、false、null，默认为null，另外boolean类型值不可直接打印 
+    --变量声明 
+    declare 
+        v_temp number(1); 
+        v_count binary_integer:=0; 
+        v_sal number(7,2):=8888.88; 
+        v_date date:=sysdate; 
+        v_pi constant number(3,2):=3.14; 
+        v_valid boolean:=false; 
+        v_name varchar2(20) not null:='geniusxiaoyu'; 
+    begin 
+        dbms_output.put_line('v_temp value:' || v_temp);    --"||"字符串连接符
+    end; 
+    --变量声明：使用%type属性              --与表中类型一样
+    declare 
+        v_empno number(4); 
+        v_empno2 emp.empno%type; 
+        v_empno3 v_empno2%type; 
+    begin 
+        dbms_output.put_line('test for type'); 
+    end; 
+
+43-----------------------------------------------------------------
+
+    --Table变量类型,相当于数组类型 
+    declare 
+        type type_table_emp_empno is table of emp.empno%type index by                     binary_integer; 
+        v_empnos typa_table_emp_empno; 
+    begin 
+        v_empnos(0):=7777; 
+        v_empnos(1):=7778; 
+        v_empnos(-1):=6666; 
+        dbms_output.put_line(v_empnos(-1)); 
+    end; 
+
+    --Record变量类型，相当于类 (Record中有几部分)
+    declare 
+        type type_record_dept is record 
+        ( 
+         deptno dept.deptno%type, 
+         dname dept.dname%type, 
+         loc dept.loc%type 
+        ); 
+        v_temp type_record_dept; 
+    begin 
+        v_temp.deptno:=50; 
+        v_temp.dname:='yugang'; 
+        v_temp.loc:='beijing'; 
+        dbms_output.put_line(v_temp.deptno || ' ' || v_temp.dname || ' ' ||                 v_temp.loc); 
+    end; 
+    --使用%rowtype声明record变量 (原表中有几个字段.record中就有几个变量)
+    declare 
+        v_temp dept%rowtype; 
+    begin 
+        v_temp.deptno:=50; 
+        v_temp.dname:='yugang'; 
+        v_temp.loc:='beijing'; 
+        dbms_output.put_line(v_temp.deptno || ' ' || v_temp.dname || ' ' ||                 v_temp.loc); 
+    end; 
+
+    --SQL语句的运用 
+    --select语句必须和into语句一块使用并且只能返回一条记录 
+    --sql%rowcount 
+    declare 
+        v_name emp.ename%type; 
+        v_sal emp.sal%type; 
+    begin 
+        select ename,sal into v_name,v_sal from emp where empno=7369; 
+        dbms_output.put_line(v_name || ' ' || v_sal); 
+    end; 
+
+    declare 
+        v_temp emp%rowtype; 
+    begin 
+        select * into v_temp from emp where empno=7369; 
+        dbms_output.put_line(v_temp.ename || ' ' || v_temp.eno); 
+    end; 
+
+    declare 
+        v_deptno dept.deptno%type:=50; 
+        v_dname dept.dname%type:='mm'; 
+        v_loc dept.loc%type:='bj'; 
+    begin 
+        insert into dept values(v_deptno,v_dname,v_loc); 
+        commit; 
+    end; 
+
+    declare 
+        v_deptno dept.deptno%type:=50; 
+        v_count number; 
+    begin    
+        --update emp set sal:=sal/2 where deptno=v_deptno; 
+        --select deptno into v_deptno from emp where deptno=7369; 
+        select count(*) into v_count from emp; 
+        dbms_output.put_line(sql%rowcount || '条记录被影响！'); 
+        commit; 
+    end; 
+
+44-------------------------------------------------------------------------
+
+    --DDL语句，在PLSQL中使用DDL语句要加上execute immediate,两个单引号代表一个单引号 
+    begin 
+        execute immediate 'create table tt(name varchar2(20) default ''Army'')'; 
+    end; 
+
+    declare 
+        v_sal emp.sal%type; 
+    begin 
+        select sal into v_sal from emp where empno=7369; 
+        if(v_sal<1200) then 
+            dbms_output.put_line('low'); 
+        elsif(v_sal<2000) then 
+            dbms_output.put_line('middle'); 
+        else 
+            dbms_output.put_line('high'); 
+        end if; 
+    end; 
+    
+45------------------------------------------------------------------
+
+    --循环 
+    declare 
+     i binary_integer:=1; 
+    begin 
+     loop 
+     dbms_output.put_line(i); 
+     i:=i+1; 
+     exit when (i >= 11); 
+     end loop; 
+    end; 
+
+
+    declare 
+     j binary_integer:=1; 
+    begin 
+     while j<11 loop 
+       dbms_output.put_line(j); 
+       j:=j+1; 
+     end loop; 
+    end; 
+
+    begin 
+     for k in 1..10 loop 
+       dbms_output.put_line(k); 
+     end loop; 
+     for k in reverce 1..10 loop 
+       dbms_output.put_line(k); 
+     end loop; 
+    end; 
+
+46---------------------------------------------------------------
+    --错误处理 
+    declare 
+     v_temp number; 
+    begin 
+     select empno into v_temp where deptno=10; 
+    exception 
+     when too_many_rows then 
+       dbms_output.put_line('太多记录了'); 
+     when others then 
+       dbms_output.put_line('error'); 
+    end; 
+
+    declare 
+     v_temp number; 
+    begin 
+     select deptno into v_temp from emp where empno=2222; 
+    exception 
+     when no_data_found then 
+       dbms_output.put_line('没数据'); 
+    end; 
+
+    create table errorlog 
+    ( 
+    id number primary key, 
+    errcode number, 
+    errmsg varchar2(1024), 
+    errdate date 
+    ); 
+    
+    create sequence seq_errorlog_id start with 1 increment by 1;   --自动递增的sequence
+
+    declare 
+     v_deptno dept.deptno%type:=10; 
+     v_errcode number; 
+     v_errmsg varchar2(1024); 
+    begin 
+     delete from dept where deptno=v_deptno; 
+     commit; 
+    exception 
+     when others then 
+       rollback; 
+       v_errcode:=SQLCODE; 
+       v_errmsg:=SQLERRM; 
+       insert into errlog values(seq_errorlog_id.nextVal,v_errcode,v_errmsg,sysdate); 
+       commit; 
+    end; 
+
+47-------------------------------------------------------
+
+第47~48课：cursor（重点） 
+    declare 
+     cursor c is 
+       select * from emp; 
+     v_emp c%rowtype; 
+    begin 
+     open c; 
+     fetch c into v_emp; 
+     dbms_output.put_line(v_emp.ename); 
+     close c; 
+    end; 
+****************************
+    --简单循环 
+    declare 
+     cursor c is 
+       select * from emp; 
+     v_emp c%rowtype; 
+    begin 
+     open c; 
+     loop 
+       fetch c into v_emp; 
+       exit when(c%notfound); 
+       dbms_output.put_line(v_emp.ename); 
+     end loop; 
+    end;  
+*************************
+    declare 
+     cursor c is 
+       select * from emp; 
+     v_emp c%rowtype; 
+    begin 
+     open c; 
+     loop 
+       fetch c into v_emp; 
+       --下面两行顺序改变后，将会把最后一条记录打印两遍 
+       dbms_output.put_line(v_emp.ename); 
+       exit when(c%notfound); 
+       
+     end loop; 
+    end;  
+****************************
+    --while循环 
+    declare 
+     cursor c is 
+       select * from emp; 
+     v_emp emp%rowtype; 
+    begin 
+     open c; 
+     fetch c into v_emp; 
+     while(c%found) loop 
+       dbms_output.put_line(v_emp.ename); 
+       fetch c into v_emp; 
+     end loop; 
+     close c; 
+    end; 
+****************************
+    --for循环 (常用)
+    declare 
+     cursor c is 
+       select * from emp; 
+    begin 
+     open c; 
+     for v_emp in c loop 
+       dbms_output.put_line(v_emp.ename); 
+     end loop; 
+     close c; 
+    end; 
+******************************
+    --带参数的游标 
+    declare 
+     cursor c(v_deptno emp.deptno%type,v_job emp.job%type) is 
+       select ename,sal from emp where deptno=v_deptno and job=v_job; 
+     --v_emp emp%rowtype; 
+    begin 
+     for v_emp in c(30,'JAY') loop 
+       dbms_output.put_line(v_emp.ename); 
+     end loop; 
+    end; 
+**********************************
+    --可更新的游标 
+    declare 
+     cursor c is 
+       select * from emp for update; 
+     --v_temp c%rowtype; 
+    begin 
+     for v_temp in c loop 
+       if(v_temp.sal < 2000) then 
+         update emp set sal=sal*2 where current of c; 
+       elsif(v_temp.sal=5000) then 
+         delete from emp where current of c; 
+       end if; 
+     end loop; 
+     commit; 
+    end; 
+49---------------------------------------------------
+
+第49～50课：procedure (存储过程)
+    create or replace procedure p 
+    is 
+     cursor c is 
+       select * from emp for update; 
+    begin 
+     for v_temp in c loop 
+       if(v_temp.deptno=10) then 
+         update emp set sal=sal+10 where current of c; 
+       elsif(v_temp.deptno=20) then 
+         update emp set sal=sal+20 where current of c; 
+       else 
+         update emp set sal=sal+50 where current of c; 
+       end if; 
+     end loop; 
+     commit; 
+    end; 
+
+    --带参数的存储过程 
+    create or replace procedure p 
+     (v_a in number,v_b number,v_ret out number,v_temp in out number)   --in传入参数,out传出参数,默认是in
+    is 
+    begin 
+     if(v_a<v_b) then 
+       v_ret:=v_b; 
+     else 
+       v_ret:=v_a; 
+     end if; 
+     v_temp:=v_temp+1; 
+    end; 
+
+    declare 
+     v_a number:=10; 
+     v_b number:=20; 
+     v_ret number; 
+     v_temp number:=99; 
+    begin 
+     p(v_a,v_b,v_ret,v_temp); 
+     dbms_output.put_line(v_ret); 
+     dbms_output.put_line(v_temp); 
+    end; 
+
+4
+6
+    /* 
+    存储过程在创建过程中如果出现错误，仍然会创建，并且不会提示错误在哪儿，可以使用 
+    show error来查看错误出现在哪儿。 
+    */ 
+
+    create or replace function tax_sal 
+     (v_sal number) 
+     return number 
+    is 
+    begin 
+     if(v_sal<2000) then 
+       return 0.10; 
+     elsif(v_sal<3000) then 
+       return 0.20; 
+     else 
+       return 0.30; 
+     end if; 
+    end; 
+     
+    --触发器 
+    create table emp_log 
+    ( 
+    uname varchar2(20); 
+    action varchar2(10); 
+    atime date 
+    ); 
+    create or replace trigger trig 
+     after/before insert or update or delete on emp2 for each row 
+    begin 
+     if inserting then 
+       insert into emp_log values(USER,'insert',sysdate); 
+     elsif updating then 
+       insert into emp_log values(USER,'update',sysdate); 
+     else 
+       insert into emp_log values(USER,'delete',sysdate); 
+     end if; 
+    end; 
+
+    update dept set deptno=99 where deptno=10; 
+    --违反约束条件 
+    create or replace trigger trig 
+     after update on dept for each row 
+    begin 
+     update emp set deptno=:NEW.deptno where deptno=:OLD.deptno;     --:NEW.deptno(新的),:OLD.deptno(旧的)
+    end; 
